@@ -50,13 +50,35 @@ Particle createParticle(int id, double x, double y, double theta) {
 
 void ParticleFilter::prediction(double delta_t, double std_pos[], 
                                 double velocity, double yaw_rate) {
-  /**
-   * TODO: Add measurements to each particle and add random Gaussian noise.
-   * NOTE: When adding noise you may find std::normal_distribution 
-   *   and std::default_random_engine useful.
-   *  http://en.cppreference.com/w/cpp/numeric/random/normal_distribution
-   *  http://www.cplusplus.com/reference/random/default_random_engine/
-   */
+  std::default_random_engine generator;
+  
+  for (int i = 0; i < num_particles; i++) {   
+    double pred_x;
+    double pred_y;
+    double pred_theta;
+    double x0 = particles[i].x;
+    double y0 = particles[i].y;
+    double yaw0 = particles[i].theta;
+
+    if (yaw_rate == 0) {
+      pred_theta = yaw0;
+      pred_x = x0 + velocity * cos(yaw0) * delta_t;
+      pred_y = y0 + velocity * sin(yaw0) * delta_t;
+    } else {
+      pred_theta = yaw0 + yaw_rate * delta_t;
+      pred_x = x0 + (velocity/yaw_rate) * (sin(pred_theta) - sin(yaw0));
+      pred_y = y0 + (velocity/yaw_rate) * (cos(yaw0) - cos(pred_theta));
+    }
+    
+    std::normal_distribution<double> dist_x(pred_x, std_pos[0]);
+    particles[i].x = dist_x(generator);
+
+    std::normal_distribution<double> dist_y(pred_y, std_pos[1]);
+    particles[i].y = dist_y(generator);
+
+    std::normal_distribution<double> dist_theta(pred_theta, std_pos[2]);
+    particles[i].theta = dist_theta(generator);
+  }
 
 }
 
