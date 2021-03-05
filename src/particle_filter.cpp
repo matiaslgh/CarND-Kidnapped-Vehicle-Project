@@ -92,8 +92,8 @@ void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted,
   for (int i = 0; i < observations.size(); i++) {
     LandmarkObs observation = observations[i];
     LandmarkObs closest_landmark;
-    for (int j = 0; i < predicted.size(); i++) {
-      LandmarkObs prediction = predicted[i];
+    for (int j = 0; j < predicted.size(); j++) {
+      LandmarkObs prediction = predicted[j];
       
       double distance = dist(observation.x, observation.y, prediction.x, prediction.y);
       if (distance < min_distance) {
@@ -105,22 +105,57 @@ void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted,
   }
 }
 
+vector<LandmarkObs> transformCarToMapCoordinates(const vector<LandmarkObs> &observations, Particle particle) {
+  vector<LandmarkObs> transformed_observations;
+  double theta = particle.theta;
+
+  for (int i=0; i < observations.size(); i++){
+    LandmarkObs observation = observations[i];
+    LandmarkObs transformed_obervation;
+
+    transformed_obervation.x = observation.x * cos(theta) - observation.y * sin(theta) + particle.x;
+    transformed_obervation.y = observation.x * sin(theta) + observation.y * cos(theta) + particle.y;
+    transformed_obervation.id = observation.id;
+
+    transformed_observations.push_back(transformed_obervation);
+  }
+
+  return transformed_observations;
+}
+
+vector<LandmarkObs> filterOutLandmarksOutOfSensorRange(double sensor_range,
+                                                      Particle particle,
+                                                      vector<Map::single_landmark_s> landmark_list) {
+  vector<LandmarkObs> predicted_landmarks;
+  for (int i = 0; i < landmark_list.size(); i++) {
+    Map::single_landmark_s landmark = landmark_list[i];
+    double x_diff = fabs(particle.x - landmark.x_f);
+    double y_diff = fabs((particle.y - landmark.y_f));
+    if ((x_diff <= sensor_range) && (y_diff <= sensor_range)) {
+      LandmarkObs predicted_landmark;
+      predicted_landmark.id = landmark.id_i;
+      predicted_landmark.x = landmark.x_f;
+      predicted_landmark.y = landmark.y_f;
+
+      predicted_landmarks.push_back(predicted_landmark);
+    }
+  }
+  return predicted_landmarks;
+}
+
 void ParticleFilter::updateWeights(double sensor_range, double std_landmark[], 
                                    const vector<LandmarkObs> &observations, 
                                    const Map &map_landmarks) {
-  /**
-   * TODO: Update the weights of each particle using a mult-variate Gaussian 
-   *   distribution. You can read more about this distribution here: 
-   *   https://en.wikipedia.org/wiki/Multivariate_normal_distribution
-   * NOTE: The observations are given in the VEHICLE'S coordinate system. 
-   *   Your particles are located according to the MAP'S coordinate system. 
-   *   You will need to transform between the two systems. Keep in mind that
-   *   this transformation requires both rotation AND translation (but no scaling).
-   *   The following is a good resource for the theory:
-   *   https://www.willamette.edu/~gorr/classes/GeneralGraphics/Transforms/transforms2d.htm
-   *   and the following is a good resource for the actual equation to implement
-   *   (look at equation 3.33) http://planning.cs.uiuc.edu/node99.html
-   */
+  for (int i=0; i < particles.size(); i++) {
+    vector<LandmarkObs> predicted_landmarks = filterOutLandmarksOutOfSensorRange(sensor_range, particles[i], map_landmarks.landmark_list);
+    vector<LandmarkObs> transformed_observations = transformCarToMapCoordinates(observations, particles[i]);
+    dataAssociation(predicted_landmarks, transformed_observations);
+    /**
+     * TODO: Update the weights of each particle using a mult-variate Gaussian 
+     *   distribution. You can read more about this distribution here: 
+     *   https://en.wikipedia.org/wiki/Multivariate_normal_distribution
+     */
+  }
 
 }
 
