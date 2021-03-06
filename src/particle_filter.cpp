@@ -143,20 +143,43 @@ vector<LandmarkObs> filterOutLandmarksOutOfSensorRange(double sensor_range,
   return predicted_landmarks;
 }
 
+double multivariateGaussianDist(double sigma_x, double sigma_y, double x_obs,
+                                double y_obs, double mu_x, double mu_y) {
+  double gauss_normalization = 1 / (2 * M_PI * sigma_x * sigma_y);
+  double x_term = pow(x_obs - mu_x, 2) / (2 * pow(sigma_x, 2));
+  double y_term = pow(y_obs - mu_y, 2) / (2 * pow(sigma_y, 2));
+  double exponent = x_term + y_term;
+  return gauss_normalization * exp(-exponent);
+}
+
+double calculateWeight(vector<LandmarkObs> predicted_landmarks, vector<LandmarkObs> observations, double std_landmark[]) {
+  double weight = 1.0;
+  double sigma_x = std_landmark[0];
+  double sigma_y = std_landmark[1];
+  
+  for (int i = 0; i < observations.size(); i++) {
+    LandmarkObs obs = observations[i];
+    for (int j = 0; j < predicted_landmarks.size(); j++) {
+      LandmarkObs pred = predicted_landmarks[j];
+      // TODO: Use maps instead of arrays to simplify this logic
+      if (obs.id == pred.id) {
+        weight *= multivariateGaussianDist(sigma_x, sigma_y, obs.x, obs.y, pred.x, pred.y);
+      }
+    }
+  }
+  return weight;
+}
+
 void ParticleFilter::updateWeights(double sensor_range, double std_landmark[], 
                                    const vector<LandmarkObs> &observations, 
                                    const Map &map_landmarks) {
   for (int i=0; i < particles.size(); i++) {
-    vector<LandmarkObs> predicted_landmarks = filterOutLandmarksOutOfSensorRange(sensor_range, particles[i], map_landmarks.landmark_list);
-    vector<LandmarkObs> transformed_observations = transformCarToMapCoordinates(observations, particles[i]);
+    Particle particle = particles[i];
+    vector<LandmarkObs> predicted_landmarks = filterOutLandmarksOutOfSensorRange(sensor_range, particle, map_landmarks.landmark_list);
+    vector<LandmarkObs> transformed_observations = transformCarToMapCoordinates(observations, particle);
     dataAssociation(predicted_landmarks, transformed_observations);
-    /**
-     * TODO: Update the weights of each particle using a mult-variate Gaussian 
-     *   distribution. You can read more about this distribution here: 
-     *   https://en.wikipedia.org/wiki/Multivariate_normal_distribution
-     */
+    particle.weight = calculateWeight(predicted_landmarks, transformed_observations, std_landmark); 
   }
-
 }
 
 void ParticleFilter::resample() {
