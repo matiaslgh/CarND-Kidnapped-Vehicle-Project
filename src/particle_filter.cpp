@@ -21,23 +21,6 @@
 using std::string;
 using std::vector;
 
-void ParticleFilter::init(double x, double y, double theta, double std[]) {
-  num_particles = 80;
-
-  std::normal_distribution<double> dist_x(x, std[0]);
-  std::normal_distribution<double> dist_y(x, std[1]);
-  std::normal_distribution<double> dist_theta(x, std[2]);
-  std::default_random_engine generator;
-
-  for (int i = 0; i < num_particles; i++){
-    Particle particle = createParticle(i, dist_x(generator), dist_y(generator), dist_theta(generator));
-    particles.push_back(particle);
-    weights.push_back(particle.weight);
-  }
-
-  is_initialized = true;
-}
-
 Particle createParticle(int id, double x, double y, double theta) {
   Particle particle;
   particle.id = id;
@@ -46,6 +29,22 @@ Particle createParticle(int id, double x, double y, double theta) {
   particle.y = y;
   particle.theta = theta;
   return particle;
+}
+
+void ParticleFilter::init(double x, double y, double theta, double std[]) {
+  num_particles = 80;
+
+  std::normal_distribution<double> dist_x(x, std[0]);
+  std::normal_distribution<double> dist_y(y, std[1]);
+  std::normal_distribution<double> dist_theta(theta, std[2]);
+  std::default_random_engine generator;
+
+  for (int i = 0; i < num_particles; i++){
+    Particle particle = createParticle(i, dist_x(generator), dist_y(generator), dist_theta(generator));
+    particles.push_back(particle);
+  }
+
+  is_initialized = true;
 }
 
 void ParticleFilter::prediction(double delta_t, double std_pos[], 
