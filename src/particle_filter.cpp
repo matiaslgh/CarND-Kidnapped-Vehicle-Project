@@ -89,18 +89,18 @@ void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted,
    */
   double min_distance = dist(observations[0].x, observations[0].y, predicted[0].x, predicted[0].y);
   for (int i = 0; i < observations.size(); i++) {
-    LandmarkObs observation = observations[i];
-    LandmarkObs closest_landmark;
+    LandmarkObs &observation = observations[i];
+    int closest_landmark_id;
     for (int j = 0; j < predicted.size(); j++) {
-      LandmarkObs prediction = predicted[j];
+      LandmarkObs &prediction = predicted[j];
       
       double distance = dist(observation.x, observation.y, prediction.x, prediction.y);
       if (distance < min_distance) {
         min_distance = distance;
-        closest_landmark = prediction;
+        closest_landmark_id = prediction.id;
       }
     }
-    observations[i] = closest_landmark;
+    observation.id = closest_landmark_id;
   }
 }
 
