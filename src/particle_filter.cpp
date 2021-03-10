@@ -181,22 +181,30 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
   }
 }
 
-void ParticleFilter::resample() {
-  // Resample particles with replacement with probability proportional to their weight. 
+vector<double> getWeights(vector<Particle> particles) {
+  vector<double> weights;
+  for (int i = 0; i < particles.size(); i++) {
+    weights.push_back(particles[i].weight);
+  }
+  return weights;
+}
 
-  std::default_random_engine gen;
+void ParticleFilter::resample() {
+  // Resample particles with replacement with probability proportional to their weight.
+
+  std::default_random_engine generator;
   vector<Particle> resampled_particles;
-  
+  vector<double> weights = getWeights(particles);
+
   double twice_max_weight = 2.0 * *max_element(weights.begin(), weights.end());
   std::uniform_real_distribution<double> random_weight(0.0, twice_max_weight);
   std::uniform_int_distribution<int> particle_index(0, num_particles - 1);
 
-  int current_index = particle_index(gen);
+  int current_index = particle_index(generator);
   double beta = 0.0;
-  
-  for (int i = 0; i < particles.size(); i++) {
-    beta += random_weight(gen);
 
+  for (int i = 0; i < particles.size(); i++) {
+    beta += random_weight(generator);
     while (beta > weights[current_index]) {
       beta -= weights[current_index];
       current_index = (current_index + 1) % num_particles;
