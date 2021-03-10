@@ -59,7 +59,7 @@ void ParticleFilter::prediction(double delta_t, double std_pos[],
     double y0 = particles[i].y;
     double yaw0 = particles[i].theta;
 
-    if (yaw_rate == 0) {
+    if (fabs(yaw_rate) < 0.0001) {
       pred_theta = yaw0;
       pred_x = x0 + velocity * cos(yaw0) * delta_t;
       pred_y = y0 + velocity * sin(yaw0) * delta_t;
@@ -144,11 +144,6 @@ vector<LandmarkObs> filterOutLandmarksOutOfSensorRange(double sensor_range,
 
 double multivariateGaussianDist(double sigma_x, double sigma_y, double x_obs,
                                 double y_obs, double x_pred, double y_pred) {
-  std::cout << "------------------------------" << std::endl;
-  std::cout << "x_obs: " << x_obs << std::endl;
-  std::cout << "x_pred: " << x_pred << std::endl;
-  std::cout << "y_obs: " << y_obs << std::endl;
-  std::cout << "y_pred: " << y_pred << std::endl;
   double gauss_normalization = 1 / (2 * M_PI * sigma_x * sigma_y);
   double x_term = pow(x_pred - x_obs, 2) / (2 * pow(sigma_x, 2));
   double y_term = pow(y_pred - y_obs, 2) / (2 * pow(sigma_y, 2));
