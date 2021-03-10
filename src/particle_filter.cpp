@@ -144,17 +144,21 @@ vector<LandmarkObs> filterOutLandmarksOutOfSensorRange(double sensor_range,
 
 double multivariateGaussianDist(double sigma_x, double sigma_y, double x_obs,
                                 double y_obs, double x_pred, double y_pred) {
+  std::cout << "------------------------------" << std::endl;
+  std::cout << "x_obs: " << x_obs << std::endl;
+  std::cout << "x_pred: " << x_pred << std::endl;
+  std::cout << "y_obs: " << y_obs << std::endl;
+  std::cout << "y_pred: " << y_pred << std::endl;
   double gauss_normalization = 1 / (2 * M_PI * sigma_x * sigma_y);
   double x_term = pow(x_pred - x_obs, 2) / (2 * pow(sigma_x, 2));
   double y_term = pow(y_pred - y_obs, 2) / (2 * pow(sigma_y, 2));
   double exponent = x_term + y_term;
-  // double result = gauss_normalization * exp(-exponent);
-  // if (result == 0) {
-  //   return 0.00001; // Avoid returning zero to prevent making weight zero --> weight *= multivariateGaussianDist(...)
-  // } else {
-  //   return result;
-  // }
-  return gauss_normalization * exp(-exponent);
+  double result = gauss_normalization * exp(-exponent);
+  if (result == 0) {
+    return 0.00001; // Avoid returning zero to prevent making weight zero --> weight *= multivariateGaussianDist(...)
+  } else {
+    return result;
+  }
 }
 
 double calculateWeight(vector<LandmarkObs> predicted_landmarks, vector<LandmarkObs> observations, double std_landmark[]) {
