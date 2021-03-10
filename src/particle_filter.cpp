@@ -51,7 +51,7 @@ void ParticleFilter::prediction(double delta_t, double std_pos[],
                                 double velocity, double yaw_rate) {
   std::default_random_engine generator;
   
-  for (int i = 0; i < num_particles; i++) {   
+  for (int i = 0; i < num_particles; i++) {
     double pred_x;
     double pred_y;
     double pred_theta;
@@ -143,11 +143,17 @@ vector<LandmarkObs> filterOutLandmarksOutOfSensorRange(double sensor_range,
 }
 
 double multivariateGaussianDist(double sigma_x, double sigma_y, double x_obs,
-                                double y_obs, double mu_x, double mu_y) {
+                                double y_obs, double x_pred, double y_pred) {
   double gauss_normalization = 1 / (2 * M_PI * sigma_x * sigma_y);
-  double x_term = pow(x_obs - mu_x, 2) / (2 * pow(sigma_x, 2));
-  double y_term = pow(y_obs - mu_y, 2) / (2 * pow(sigma_y, 2));
+  double x_term = pow(x_pred - x_obs, 2) / (2 * pow(sigma_x, 2));
+  double y_term = pow(y_pred - y_obs, 2) / (2 * pow(sigma_y, 2));
   double exponent = x_term + y_term;
+  // double result = gauss_normalization * exp(-exponent);
+  // if (result == 0) {
+  //   return 0.00001; // Avoid returning zero to prevent making weight zero --> weight *= multivariateGaussianDist(...)
+  // } else {
+  //   return result;
+  // }
   return gauss_normalization * exp(-exponent);
 }
 
@@ -155,11 +161,11 @@ double calculateWeight(vector<LandmarkObs> predicted_landmarks, vector<LandmarkO
   double weight = 1.0;
   double sigma_x = std_landmark[0];
   double sigma_y = std_landmark[1];
-  
+
   for (int i = 0; i < observations.size(); i++) {
-    LandmarkObs obs = observations[i];
+    LandmarkObs &obs = observations[i];
     for (int j = 0; j < predicted_landmarks.size(); j++) {
-      LandmarkObs pred = predicted_landmarks[j];
+      LandmarkObs &pred = predicted_landmarks[j];
       // TODO: Use maps instead of arrays to simplify this logic
       if (obs.id == pred.id) {
         weight *= multivariateGaussianDist(sigma_x, sigma_y, obs.x, obs.y, pred.x, pred.y);
@@ -173,7 +179,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
                                    const vector<LandmarkObs> &observations, 
                                    const Map &map_landmarks) {
   for (int i=0; i < particles.size(); i++) {
-    Particle particle = particles[i];
+    Particle &particle = particles[i];
     vector<LandmarkObs> predicted_landmarks = filterOutLandmarksOutOfSensorRange(sensor_range, particle, map_landmarks.landmark_list);
     vector<LandmarkObs> transformed_observations = transformCarToMapCoordinates(observations, particle);
     dataAssociation(predicted_landmarks, transformed_observations);
