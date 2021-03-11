@@ -128,9 +128,8 @@ vector<LandmarkObs> filterOutLandmarksOutOfSensorRange(double sensor_range,
   vector<LandmarkObs> predicted_landmarks;
   for (int i = 0; i < landmark_list.size(); i++) {
     Map::single_landmark_s landmark = landmark_list[i];
-    double x_diff = fabs(particle.x - landmark.x_f);
-    double y_diff = fabs((particle.y - landmark.y_f));
-    if ((x_diff <= sensor_range) && (y_diff <= sensor_range)) {
+    double landmark_dist = dist(particle.x, particle.y, landmark.x_f, landmark.y_f );
+    if (landmark_dist < sensor_range){
       LandmarkObs predicted_landmark;
       predicted_landmark.id = landmark.id_i;
       predicted_landmark.x = landmark.x_f;
