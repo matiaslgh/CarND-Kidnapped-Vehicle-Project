@@ -87,9 +87,9 @@ void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted,
    *   Find the predicted measurement that is closest to each observed measurement
    *   and assign the observed measurement to this particular landmark.
    */
-  double min_distance = dist(observations[0].x, observations[0].y, predicted[0].x, predicted[0].y);
   for (int i = 0; i < observations.size(); i++) {
     LandmarkObs &observation = observations[i];
+    double min_distance = std::numeric_limits<double>::max();
     int closest_landmark_id;
     for (int j = 0; j < predicted.size(); j++) {
       LandmarkObs &prediction = predicted[j];
